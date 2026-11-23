@@ -72,8 +72,9 @@ if [ -d "${DOWNLOAD_DIR}" ] && [ -w "${DOWNLOAD_DIR}" ]; then
 fi
 
 echo "[4/5] Creating ./tools launcher..."
-cat << 'EOF' > "${LAUNCHER_LOCAL}"
-#!/data/data/com.termux/files/usr/bin/bash
+REAL_BASH="$(command -v bash 2>/dev/null || echo "${PREFIX:-/data/data/com.termux/files/usr}/bin/bash")"
+printf '#!%s\n' "${REAL_BASH}" > "${LAUNCHER_LOCAL}"
+cat << 'EOF' >> "${LAUNCHER_LOCAL}"
 set -euo pipefail
 
 BIN="${HOME}/niki_tools"
@@ -93,9 +94,19 @@ fi
 CMD="${1:-start}"
 case "${CMD}" in
     start)
+        if [ ! -x "${BIN}" ]; then
+            echo "[!] Binary not found at: ${BIN}"
+            echo "    Run: bash ~/install.sh"
+            exit 1
+        fi
         exec "${BIN}"
         ;;
     proxy)
+        if [ ! -x "${BIN}" ]; then
+            echo "[!] Binary not found at: ${BIN}"
+            echo "    Run: bash ~/install.sh"
+            exit 1
+        fi
         PROXY_ADDR="${2:-127.0.0.1:9000}"
         export HTTP_PROXY="http://${PROXY_ADDR}"
         export HTTPS_PROXY="http://${PROXY_ADDR}"

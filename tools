@@ -18,9 +18,19 @@ fi
 CMD="${1:-start}"
 case "${CMD}" in
     start)
+        if [ ! -x "${BIN}" ]; then
+            echo "[!] Binary not found at: ${BIN}"
+            echo "    Run: bash ~/install.sh"
+            exit 1
+        fi
         exec "${BIN}"
         ;;
     proxy)
+        if [ ! -x "${BIN}" ]; then
+            echo "[!] Binary not found at: ${BIN}"
+            echo "    Run: bash ~/install.sh"
+            exit 1
+        fi
         PROXY_ADDR="${2:-127.0.0.1:9000}"
         export HTTP_PROXY="http://${PROXY_ADDR}"
         export HTTPS_PROXY="http://${PROXY_ADDR}"
