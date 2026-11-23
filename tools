@@ -1,0 +1,45 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+
+BIN="${HOME}/niki_tools"
+DOWNLOAD_COPY="/sdcard/Download/niki_tools"
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+export PREFIX
+export LD_LIBRARY_PATH="${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
+export TERM="${TERM:-xterm-256color}"
+
+# Auto-recover ~/niki_tools from /sdcard/Download/niki_tools if missing
+if [ ! -x "${BIN}" ] && [ -f "${DOWNLOAD_COPY}" ]; then
+    cp -f "${DOWNLOAD_COPY}" "${BIN}.new"
+    chmod 755 "${BIN}.new"
+    mv -f "${BIN}.new" "${BIN}"
+fi
+
+CMD="${1:-start}"
+case "${CMD}" in
+    start)
+        exec "${BIN}"
+        ;;
+    proxy)
+        PROXY_ADDR="${2:-127.0.0.1:9000}"
+        export HTTP_PROXY="http://${PROXY_ADDR}"
+        export HTTPS_PROXY="http://${PROXY_ADDR}"
+        export ALL_PROXY="http://${PROXY_ADDR}"
+        echo "[*] Launching with MITM proxy: ${PROXY_ADDR}"
+        exec "${BIN}"
+        ;;
+    status)
+        echo "Arch:          $(uname -m)"
+        echo "Executable:    $(ls -lh "${BIN}" 2>/dev/null || echo 'MISSING')"
+        echo "Downloads:     $(ls -lh "${DOWNLOAD_COPY}" 2>/dev/null || echo 'not accessible')"
+        echo "libffi.so:     $(ls "${PREFIX}/lib/libffi.so"* 2>/dev/null | head -n1 || echo 'MISSING')"
+        echo "libexpat.so:   $(ls "${PREFIX}/lib/libexpat.so"* 2>/dev/null | head -n1 || echo 'MISSING')"
+        ;;
+    *)
+        echo "Usage:"
+        echo "  ./tools start                 # Launch normally (Reqable VPN mode ready)"
+        echo "  ./tools proxy 127.0.0.1:9000  # Launch with explicit MITM proxy"
+        echo "  ./tools status                # Verify binary and Termux libraries"
+        exit 1
+        ;;
+esac
